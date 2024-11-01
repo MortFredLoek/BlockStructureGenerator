@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interactive Block Structure Generator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="controls">
+    <label>Color:</label>
+    <input type="color" id="colorPicker" value="#c896ff">
+    
+    <label>Block Size:</label>
+    <input type="range" id="blockSizeSlider" min="20" max="80" value="40">
+    
+    <label>Cluster Density:</label>
+    <input type="range" id="densitySlider" min="0.1" max="1" step="0.1" value="0.6">
+    
+    <button onclick="generateStructure()">Generate</button>
+  </div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script src="sketch.js"></script>
+</body>
+</html>
