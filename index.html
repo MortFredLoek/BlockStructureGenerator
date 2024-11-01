@@ -12,15 +12,23 @@
     <input type="color" id="colorPicker" value="#c896ff">
     
     <label>Block Size:</label>
-    <input type="range" id="blockSizeSlider" min="20" max="80" value="40">
+    <!-- Increased the maximum value of the slider -->
+    <input type="range" id="blockSizeSlider" min="20" max="200" value="100">
     
     <label>Cluster Density:</label>
     <input type="range" id="densitySlider" min="0.1" max="1" step="0.1" value="0.6">
-    
-    <button onclick="generateStructure()">Generate</button>
+
+    <button onclick="restart()">Restart</button>
+    <button id="animateButton" onclick="startAnimation()" disabled>Animate</button>
+
+    <!-- New Canvas Size Buttons -->
+    <button onclick="setCanvasSize(1080, 1080)">Canvas 1:1 (1080x1080)</button>
+    <button onclick="setCanvasSize(1080, 1920)">Canvas 4:5 (1080x1920)</button>
   </div>
   
+  <!-- Include p5.js for drawing and CCapture.js for video capture -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+  <script src="CCapture.all.min.js"></script>
   <script src="sketch.js"></script>
 </body>
 </html>
