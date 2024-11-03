@@ -2,7 +2,7 @@ let blockSize = 80; // Default size of each block
 let clusters = []; // Array to store clusters created from click points
 let colorPicker, blockSizeSlider, densitySlider;
 let chosenColor = '#c896ff';
-let density = 0.7;
+let density = 0.9; // Higher density for more blocks
 let growSpeed = 5; // Speed of inward growth in pixels per frame
 let isAnimating = false; // Track whether animation has started
 
@@ -45,7 +45,7 @@ function mousePressed() {
   let newCluster = {
     x: mouseX,
     y: mouseY,
-    currentRadius: 0, // Start growing from the center
+    currentRadius: blockSize * 5, // Start growing inward from the edge of the cluster
     blocks: [] // Blocks that will appear within this cluster
   };
   
@@ -62,23 +62,28 @@ function mousePressed() {
   }
 }
 
-// Generates blocks in a grid pattern around each selected point with randomness
+// Generates blocks in a fragmented pattern around each selected point
 function generateCluster(cluster) {
-  let maxBlocks = 100; // Total number of blocks we want in each cluster
+  let maxBlocks = 200; // Higher number of blocks for more density
   let blockCount = 0;
 
-  // Start generating blocks in a grid with some randomness to create the fragmented look
+  // Start generating blocks in a grid
   for (let y = -blockSize * 5; y <= blockSize * 5; y += blockSize) {
     for (let x = -blockSize * 5; x <= blockSize * 5; x += blockSize) {
       if (blockCount >= maxBlocks) break;
       let distToCenter = dist(x, y, 0, 0);
       if (distToCenter < blockSize * 5 && random(1) < density) {
-        // Push block with slightly random position and size for fragmented structure
+        // Randomize both the width and height to create more rectangular blocks
+        let sizeWidth = blockSize * random(0.3, 1.5); // Randomized width
+        let sizeHeight = blockSize * random(0.3, 1.5); // Randomized height
+
+        // Push block with random width and height
         cluster.blocks.push({
           x: cluster.x + x,
           y: cluster.y + y,
-          size: blockSize * random(0.8, 1.2), // Randomize size slightly for organic look
-          distanceFromCenter: dist(x, y, 0, 0) // Distance for sequential appearance
+          width: sizeWidth,
+          height: sizeHeight,
+          distanceFromCenter: dist(x, y, 0, 0) // Distance for sequential shrinking inward
         });
         blockCount++;
       }
@@ -86,7 +91,7 @@ function generateCluster(cluster) {
   }
 }
 
-// Begins the outward growth animation when Animate is clicked and 3 points are selected
+// Begins the inward growth animation when Animate is clicked and 3 points are selected
 function startAnimation() {
   if (clusters.length === 3) {
     isAnimating = true;
@@ -102,30 +107,30 @@ function draw() {
   fill(chosenColor);
   noStroke();
 
-  // Expand each cluster outward
+  // Shrink each cluster inward
   for (let cluster of clusters) {
     // Generate blocks for each cluster if not already done
     if (cluster.blocks.length === 0) {
       generateCluster(cluster);
     }
 
-    // Expand the "wave" outward
-    cluster.currentRadius += growSpeed;
+    // Shrink the "wave" inward
+    cluster.currentRadius -= growSpeed;
 
-    // Draw blocks within the current radius
+    // Draw blocks within the current shrinking radius
     for (let block of cluster.blocks) {
-      if (block.distanceFromCenter <= cluster.currentRadius) {
-        rect(block.x, block.y, block.size, block.size); // Use randomized size
+      if (block.distanceFromCenter >= cluster.currentRadius) {
+        rect(block.x, block.y, block.width, block.height); // Irregular rectangular blocks
       }
     }
   }
 
-  // Stop the loop and display full clusters when animation completes
-  if (clusters.every(cluster => cluster.currentRadius >= blockSize * 5)) {
+  // Stop the loop and display final clusters when animation completes
+  if (clusters.every(cluster => cluster.currentRadius <= 0)) {
     isAnimating = false;
     noLoop();
     
-    // Display the final clusters in full at the clicked points
+    // Display the final clusters at the clicked points
     drawFullClusters();
   }
 }
@@ -137,7 +142,7 @@ function drawFullClusters() {
   
   for (let cluster of clusters) {
     for (let block of cluster.blocks) {
-      rect(block.x, block.y, block.size, block.size);
+      rect(block.x, block.y, block.width, block.height); // Random width and height
     }
   }
 }

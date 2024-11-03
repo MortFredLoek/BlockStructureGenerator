@@ -3,8 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interactive Block Structure Generator</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Transparent Background Animation Export</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      margin-top: 10px;
+      border: 1px solid #ddd;
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background-color: #f9f9f9;
+      width: 100%;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    label {
+      font-size: 14px;
+    }
+    input[type="range"] {
+      width: 60%;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
 </head>
 <body>
   <div class="controls">
@@ -12,23 +51,20 @@
     <input type="color" id="colorPicker" value="#c896ff">
     
     <label>Block Size:</label>
-    <!-- Increased the maximum value of the slider -->
     <input type="range" id="blockSizeSlider" min="20" max="200" value="100">
     
     <label>Cluster Density:</label>
-    <input type="range" id="densitySlider" min="0.1" max="1" step="0.1" value="0.6">
+    <input type="range" id="densitySlider" min="0.1" max="1" step="0.1" value="0.8">
 
     <button onclick="restart()">Restart</button>
     <button id="animateButton" onclick="startAnimation()" disabled>Animate</button>
-
-    <!-- New Canvas Size Buttons -->
-    <button onclick="setCanvasSize(1080, 1080)">Canvas 1:1 (1080x1080)</button>
-    <button onclick="setCanvasSize(1080, 1920)">Canvas 4:5 (1080x1920)</button>
   </div>
-  
+
+  <div id="canvasContainer"></div>
+
   <!-- Include p5.js for drawing and CCapture.js for video capture -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
-  <script src="CCapture.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js"></script>
   <script src="sketch.js"></script>
 </body>
 </html>
