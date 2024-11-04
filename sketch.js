@@ -3,8 +3,10 @@ let clusters = []; // Array to store clusters created from click points
 let colorPicker, blockSizeSlider, densitySlider;
 let chosenColor = '#c896ff';
 let density = 0.9; // Higher density for more blocks
-let growSpeed = 5; // Speed of inward growth in pixels per frame
+let growSpeed = 5; // Speed of outward growth in pixels per frame
 let isAnimating = false; // Track whether animation has started
+let capturer; // For exporting animation as video
+let recording = false; // Track if we are recording a video
 
 function setup() {
   let canvas = createCanvas(1080, 1080); // Default canvas size set to 1:1
@@ -18,7 +20,16 @@ function setup() {
   blockSizeSlider.input(updateBlockSize);
   densitySlider.input(updateDensity);
 
-  background(255); // Initial background
+  // Button to change canvas size to 1080x1080
+  select('#setFormat1080x1080').mousePressed(() => setCanvasSize(1080, 1080));
+
+  // Button to change canvas size to 1080x1920
+  select('#setFormat1080x1920').mousePressed(() => setCanvasSize(1080, 1920));
+
+  // Button to export video
+  select('#exportVideo').mousePressed(startRecording);
+
+  background(255, 0); // Initial background (transparent)
   noLoop(); // Start without animation
 }
 
@@ -30,22 +41,22 @@ function setCanvasSize(width, height) {
 
 // Restarts by clearing the canvas and resetting clusters
 function restart() {
-  background(255); // Clear the canvas
+  background(255, 0); // Clear the canvas and set transparency
   clusters = []; // Reset clusters array
   isAnimating = false; // Reset animation state
   noLoop(); // Stop the animation loop if it was running
-  select('#animateButton').attribute('disabled', ''); // Disable Animate button
+  select('#animateButton').removeAttribute('disabled'); // Enable Animate button
 }
 
 // Handles mouse clicks to select points on the canvas
 function mousePressed() {
-  if (isAnimating || clusters.length >= 3) return; // No more points if animating or already 3 points selected
+  if (isAnimating) return; // No more points if animating 
 
   // Add a new cluster with feedback point shown
   let newCluster = {
     x: mouseX,
     y: mouseY,
-    currentRadius: blockSize * 5, // Start growing inward from the edge of the cluster
+    currentRadius: 0, // Start growing from the center outward
     blocks: [] // Blocks that will appear within this cluster
   };
   
@@ -55,35 +66,34 @@ function mousePressed() {
   fill(chosenColor);
   noStroke();
   rect(mouseX, mouseY, blockSize, blockSize);
-
-  // Enable Animate button if 3 points are selected
-  if (clusters.length === 3) {
-    select('#animateButton').removeAttribute('disabled');
-  }
+  
+  startAnimation(); // Immediately start the animation after adding a new point
 }
 
-// Generates blocks in a fragmented pattern around each selected point
+// Generates more noisy and fragmented blocks in a grid pattern around each selected point
 function generateCluster(cluster) {
-  let maxBlocks = 200; // Higher number of blocks for more density
+  let maxBlocks = 100; // Set a reasonable number of blocks to avoid overloading
   let blockCount = 0;
 
-  // Start generating blocks in a grid
+  // Start generating blocks in a more random, fragmented grid
   for (let y = -blockSize * 5; y <= blockSize * 5; y += blockSize) {
     for (let x = -blockSize * 5; x <= blockSize * 5; x += blockSize) {
       if (blockCount >= maxBlocks) break;
       let distToCenter = dist(x, y, 0, 0);
       if (distToCenter < blockSize * 5 && random(1) < density) {
-        // Randomize both the width and height to create more rectangular blocks
-        let sizeWidth = blockSize * random(0.3, 1.5); // Randomized width
-        let sizeHeight = blockSize * random(0.3, 1.5); // Randomized height
+        // Add more randomness to block position and size for a fragmented look
+        let blockWidth = blockSize * random(0.3, 1.8); // More fragmented width variation
+        let blockHeight = blockSize * random(0.3, 1.8); // More fragmented height variation
+        let offsetX = random(-blockSize * 0.3, blockSize * 0.3); // Random offset for x position
+        let offsetY = random(-blockSize * 0.3, blockSize * 0.3); // Random offset for y position
 
-        // Push block with random width and height
+        // Push block with variable size and random offset
         cluster.blocks.push({
-          x: cluster.x + x,
-          y: cluster.y + y,
-          width: sizeWidth,
-          height: sizeHeight,
-          distanceFromCenter: dist(x, y, 0, 0) // Distance for sequential shrinking inward
+          x: cluster.x + x + offsetX,
+          y: cluster.y + y + offsetY,
+          width: blockWidth,
+          height: blockHeight,
+          distanceFromCenter: dist(x, y, 0, 0) // Distance for sequential growing outward
         });
         blockCount++;
       }
@@ -91,13 +101,10 @@ function generateCluster(cluster) {
   }
 }
 
-// Begins the inward growth animation when Animate is clicked and 3 points are selected
+// Begins the outward growth animation when Animate is clicked
 function startAnimation() {
-  if (clusters.length === 3) {
-    isAnimating = true;
-    select('#animateButton').attribute('disabled', ''); // Disable Animate button during animation
-    loop(); // Start the animation loop
-  }
+  isAnimating = true;
+  loop(); // Start the animation loop
 }
 
 function draw() {
@@ -107,43 +114,37 @@ function draw() {
   fill(chosenColor);
   noStroke();
 
-  // Shrink each cluster inward
+  // Grow each cluster outward
   for (let cluster of clusters) {
     // Generate blocks for each cluster if not already done
     if (cluster.blocks.length === 0) {
       generateCluster(cluster);
     }
 
-    // Shrink the "wave" inward
-    cluster.currentRadius -= growSpeed;
+    // Grow the "wave" outward
+    cluster.currentRadius += growSpeed;
 
-    // Draw blocks within the current shrinking radius
+    // Draw blocks within the current growing radius
     for (let block of cluster.blocks) {
-      if (block.distanceFromCenter >= cluster.currentRadius) {
-        rect(block.x, block.y, block.width, block.height); // Irregular rectangular blocks
+      if (block.distanceFromCenter <= cluster.currentRadius) {
+        rect(block.x, block.y, block.width, block.height); // Draw with varied size and offset
       }
     }
   }
 
-  // Stop the loop and display final clusters when animation completes
-  if (clusters.every(cluster => cluster.currentRadius <= 0)) {
+  // Stop the loop when all clusters have fully grown
+  if (clusters.every(cluster => cluster.currentRadius >= blockSize * 5)) {
     isAnimating = false;
     noLoop();
-    
-    // Display the final clusters at the clicked points
-    drawFullClusters();
-  }
-}
-
-// Function to draw complete clusters at the clicked points
-function drawFullClusters() {
-  fill(chosenColor);
-  noStroke();
-  
-  for (let cluster of clusters) {
-    for (let block of cluster.blocks) {
-      rect(block.x, block.y, block.width, block.height); // Random width and height
+    if (recording) {
+      capturer.stop();
+      capturer.save(); // Save the video after the animation ends
+      recording = false;
     }
+  }
+
+  if (recording) {
+    capturer.capture(document.getElementById('defaultCanvas0')); // Capture each frame
   }
 }
 
@@ -166,4 +167,17 @@ function updateDensity() {
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight * (height / width));
   restart();
+}
+
+// Start recording the animation
+function startRecording() {
+  capturer = new CCapture({
+    format: 'webm',
+    framerate: 60,
+    transparent: true, // Enable transparency
+    quality: 100,
+  });
+  recording = true;
+  capturer.start();
+  startAnimation(); // Begin the animation and capture
 }
